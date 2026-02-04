@@ -815,7 +815,7 @@ function ensureResultOverlay() {
 
   if (resultBtnCollectionEl) {
     resultBtnCollectionEl.addEventListener("click", () => {
-      window.location.href = "./collection.html";
+      window.location.href = "https://naoki496.github.io/cards-hub/";
     });
   }
 
