@@ -475,18 +475,30 @@ function setTimerBarStyleByRemain(remainMs) {
   if (!timerInnerEl) return;
 
   const frac = Math.max(0, Math.min(1, remainMs / timerTotalMs)); // 1 -> 0
-  // 冷色(青) -> 白寄りへ
-  // 残りが少ないほど whiten を増やす
-  const whiten = Math.round((1 - frac) * 85); // 0..85
-  const alphaA = 0.75 + (1 - frac) * 0.15;
-  const alphaB = 0.35 + (1 - frac) * 0.20;
 
-  const cA = `rgba(${Math.min(120 + whiten, 235)}, ${Math.min(220 + whiten, 255)}, 255, ${alphaA.toFixed(2)})`;
-  const cB = `rgba(${Math.min(0 + whiten, 240)}, ${Math.min(180 + whiten, 255)}, ${Math.min(255, 255)}, ${alphaB.toFixed(2)})`;
+  // ===== Amber(255,176,0) -> White(255,255,255) へ寄せる =====
+  // 残りが少ないほど白に近づく
+  const t = 1 - frac; // 0..1
+  const g = Math.round(176 + (255 - 176) * t); // 176 -> 255
+  const b = Math.round(0 + 255 * t);           // 0   -> 255
+  const r = 255;
+
+  // 透明度もわずかに上げて「終盤ほど発光感」増
+  const alphaA = 0.78 + t * 0.10; // 0.78 -> 0.88
+  const alphaB = 0.34 + t * 0.14; // 0.34 -> 0.48
+
+  const cA = `rgba(${r}, ${g}, ${b}, ${alphaA.toFixed(2)})`;
+  const cB = `rgba(${r}, ${Math.max(160, g - 25)}, ${Math.max(0, b - 35)}, ${alphaB.toFixed(2)})`;
 
   timerInnerEl.style.background = `linear-gradient(90deg, ${cA}, ${cB})`;
-  timerInnerEl.style.boxShadow = `0 0 ${Math.round(18 + (1 - frac) * 16)}px rgba(170, 230, 255, ${Math.min(0.36, 0.20 + (1 - frac) * 0.22).toFixed(2)})`;
+
+  // glow もアンバー寄り（終盤ほど強め）
+  const glowA = Math.min(0.38, 0.20 + t * 0.22);
+  const blur = Math.round(18 + t * 16);
+
+  timerInnerEl.style.boxShadow = `0 0 ${blur}px rgba(255, 176, 0, ${glowA.toFixed(2)})`;
 }
+
 
 function startTimerForQuestion() {
   ensureTimerUI();
