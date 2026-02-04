@@ -477,13 +477,11 @@ function setTimerBarStyleByRemain(remainMs) {
   const frac = Math.max(0, Math.min(1, remainMs / timerTotalMs)); // 1 -> 0
 
   // ===== Amber(255,176,0) -> White(255,255,255) へ寄せる =====
-  // 残りが少ないほど白に近づく
   const t = 1 - frac; // 0..1
   const g = Math.round(176 + (255 - 176) * t); // 176 -> 255
   const b = Math.round(0 + 255 * t);           // 0   -> 255
   const r = 255;
 
-  // 透明度もわずかに上げて「終盤ほど発光感」増
   const alphaA = 0.78 + t * 0.10; // 0.78 -> 0.88
   const alphaB = 0.34 + t * 0.14; // 0.34 -> 0.48
 
@@ -492,13 +490,11 @@ function setTimerBarStyleByRemain(remainMs) {
 
   timerInnerEl.style.background = `linear-gradient(90deg, ${cA}, ${cB})`;
 
-  // glow もアンバー寄り（終盤ほど強め）
   const glowA = Math.min(0.38, 0.20 + t * 0.22);
   const blur = Math.round(18 + t * 16);
 
   timerInnerEl.style.boxShadow = `0 0 ${blur}px rgba(255, 176, 0, ${glowA.toFixed(2)})`;
 }
-
 
 function startTimerForQuestion() {
   ensureTimerUI();
@@ -516,34 +512,34 @@ function startTimerForQuestion() {
   timerLoopId = setInterval(() => {
     const now = Date.now();
     const remain = timerEndAt - now;
-  
+
     if (remain <= 0) {
       stopTimer();
       onTimeUp();
       return;
     }
-  
+
     const sec = remain / 1000;
     if (timerTextEl) timerTextEl.textContent = `${sec.toFixed(1)}s`;
-  
+
     const pct = Math.max(0, Math.min(100, (remain / timerTotalMs) * 100));
     if (timerInnerEl) timerInnerEl.style.width = `${pct}%`;
-  
+
     // warn（残り5秒）
     const isWarn = sec <= WARN_AT_SEC;
     if (timerOuterEl) {
       if (isWarn) timerOuterEl.classList.add("warn");
       else timerOuterEl.classList.remove("warn");
     }
-  
-    // ✅ バー色：通常は青→白、残り5秒は「赤」に強制
+
+    // ✅ 残り5秒は赤に強制
     if (isWarn && timerInnerEl) {
       timerInnerEl.style.background =
         "linear-gradient(90deg, rgba(255,70,70,0.95), rgba(255,180,80,0.65))";
       timerInnerEl.style.boxShadow =
         "0 0 28px rgba(255,70,70,0.35), 0 0 60px rgba(255,70,70,0.16)";
     } else {
-      setTimerBarStyleByRemain(remain); // 青→白
+      setTimerBarStyleByRemain(remain);
     }
   }, 100);
 }
@@ -558,6 +554,7 @@ function triggerTimeUpScanlineOnce() {
 }
 
 function onTimeUp() {
+  // ★★★ 修正点：TIME UP を「不正解」として履歴に積む（星計算の母数を壊さない） ★★★
   if (locked) return;
 
   locked = true;
@@ -565,6 +562,15 @@ function onTimeUp() {
 
   const q = order[index];
   const correctIdx = q.answer - 1;
+
+  // 履歴（TIME UP を「選択なし(-1)の不正解」として積む）
+  history.push({
+    q,
+    selectedIdx: -1,
+    correctIdx,
+    isCorrect: false,
+    isTimeUp: true,
+  });
 
   // 正解だけ表示（不正解の赤は付けない）
   try {
@@ -714,6 +720,7 @@ function buildReviewHtml() {
   const items = wrong.map((h, idx) => {
     const q = h.q;
     const qText = q.source ? `${q.question}（${q.source}）` : q.question;
+
     const choicesHtml = q.choices
       .map((c, i) => {
         const isC = i === h.correctIdx;
@@ -850,7 +857,9 @@ function ensureResultOverlay() {
 function showResultOverlay() {
   ensureResultOverlay();
 
-  const total = order.length || 1;
+  // ★★★ 修正点：母数は history.length を優先（TIME UP を含めて堅牢に） ★★★
+  const total = (history && history.length) ? history.length : (order.length || 1);
+
   const percent = Math.round((score / total) * 100);
   const stars = calcStars(score, total);
   const rank = calcRankName(stars, maxCombo);
@@ -994,7 +1003,6 @@ if (modeNormalBtn) {
       e.preventDefault();
       try { await beginFromStartScreen({ auto: false }); } catch (err) { console.error(err); }
     }
-    // canBeginNow() が false の時は、aタグのhref遷移に任せる
   });
 }
 
