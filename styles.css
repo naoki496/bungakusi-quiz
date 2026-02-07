@@ -992,7 +992,7 @@ h1{
   position: relative;
 }
 
-.collection-item::after{
+.collection-js::after{
   content: "▶OPEN";
   position: absolute;
   right: 18px;
