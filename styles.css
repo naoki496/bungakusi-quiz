@@ -987,20 +987,3 @@ h1{
   overflow: hidden;
 }
 
-/* === コレクション行：押せる誘導 ===================== */
-.collection-item{
-  position: relative;
-}
-
-.collection-js::after{
-  content: "▶OPEN";
-  position: absolute;
-  right: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  letter-spacing: .14em;
-  opacity: .7;
-  user-select: none;
-  pointer-events: none; /* 行クリックを邪魔しない */
-}
