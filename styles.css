@@ -993,7 +993,7 @@ h1{
 }
 
 .collection-item::after{
-  content: "▶VIEW OPEN";
+  content: "▶OPEN";
   position: absolute;
   right: 18px;
   top: 50%;
