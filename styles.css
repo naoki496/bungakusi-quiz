@@ -986,3 +986,21 @@ h1{
   position: relative;
   overflow: hidden;
 }
+
+/* === コレクション行：押せる誘導 ===================== */
+.collection-item{
+  position: relative;
+}
+
+.collection-item::after{
+  content: "▶VIEW OPEN";
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  letter-spacing: .14em;
+  opacity: .7;
+  user-select: none;
+  pointer-events: none; /* 行クリックを邪魔しない */
+}
