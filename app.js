@@ -183,13 +183,10 @@ const seCorrectPool = makeSEPool(AUDIO_FILES.correct, 0.9);
 const seWrongPool = makeSEPool(AUDIO_FILES.wrong, 0.9);
 
 // ===== Storage (localStorage 可用性チェック + フォールバック) =====
-//
-// ✅ ここが今回の本修正：cards-hub と同じ共通キーへ統一
-//   - 新キー: hklobby.v1.cardCounts
-//   - 旧キー: kobunQuiz.v1.cardCounts（過去データ救済用）
-//
+// ✅ 共通キー（DOJO/両クイズ/図鑑で共有）
 const STORAGE_KEY_CARD_COUNTS = "hklobby.v1.cardCounts";
-const LEGACY_KEY_CARD_COUNTS  = "kobunQuiz.v1.cardCounts";
+// ✅ 旧キー救済（過去に残っていた場合のみ1回だけ移行）
+const LEGACY_KEY_CARD_COUNTS = "kobunQuiz.v1.cardCounts";
 
 function storageAvailable() {
   try {
@@ -224,7 +221,7 @@ const StorageAdapter = (() => {
       try {
         if (ok) window.localStorage.removeItem(key);
         else mem.delete(key);
-      } catch (e) {
+      } catch (_) {
         mem.delete(key);
       }
     },
@@ -236,19 +233,15 @@ function migrateCardCountsIfNeeded() {
   try {
     const hasNew = !!StorageAdapter.get(STORAGE_KEY_CARD_COUNTS);
     const legacyRaw = StorageAdapter.get(LEGACY_KEY_CARD_COUNTS);
-
     if (!hasNew && legacyRaw) {
-      // 旧データが壊れていたら移行しない（落とさない）
       const parsed = JSON.parse(legacyRaw);
       if (parsed && typeof parsed === "object") {
         StorageAdapter.set(STORAGE_KEY_CARD_COUNTS, legacyRaw);
-        // 旧キーは削除（運用を一本化）
         StorageAdapter.remove(LEGACY_KEY_CARD_COUNTS);
         console.log("[migrate] cardCounts migrated to", STORAGE_KEY_CARD_COUNTS);
       }
     }
   } catch (e) {
-    // 何もしない（安全第一）
     console.warn("[migrate] skipped:", e);
   }
 }
@@ -352,8 +345,7 @@ function pickWeighted(arr, getWeight) {
 function rollCardByStars(stars) {
   if (stars < 3) return null;
 
-  // 評価★ごとの排出確率テーブル
-  // ※ 合計は 1.0
+  // 評価★ごとの排出確率テーブル（合計 1.0）
   const DROP_TABLE = {
     3: [
       { tier: 3, p: 0.85 },
@@ -548,14 +540,14 @@ function setTimerBarStyleByRemain(remainMs) {
 
   const frac = Math.max(0, Math.min(1, remainMs / timerTotalMs)); // 1 -> 0
 
-  // ===== Amber(255,176,0) -> White(255,255,255) へ寄せる =====
+  // Amber -> White
   const t = 1 - frac; // 0..1
-  const g = Math.round(176 + (255 - 176) * t); // 176 -> 255
-  const b = Math.round(0 + 255 * t);           // 0   -> 255
+  const g = Math.round(176 + (255 - 176) * t);
+  const b = Math.round(0 + 255 * t);
   const r = 255;
 
-  const alphaA = 0.78 + t * 0.10; // 0.78 -> 0.88
-  const alphaB = 0.34 + t * 0.14; // 0.34 -> 0.48
+  const alphaA = 0.78 + t * 0.10;
+  const alphaB = 0.34 + t * 0.14;
 
   const cA = `rgba(${r}, ${g}, ${b}, ${alphaA.toFixed(2)})`;
   const cB = `rgba(${r}, ${Math.max(160, g - 25)}, ${Math.max(0, b - 35)}, ${alphaB.toFixed(2)})`;
@@ -575,12 +567,10 @@ function startTimerForQuestion() {
   timerTotalMs = QUESTION_TIME_SEC * 1000;
   timerEndAt = Date.now() + timerTotalMs;
 
-  // 初期表示
   if (timerTextEl) timerTextEl.textContent = `${QUESTION_TIME_SEC.toFixed(0)}.0s`;
   if (timerInnerEl) timerInnerEl.style.width = "100%";
   setTimerBarStyleByRemain(timerTotalMs);
 
-  // 100ms刻み（軽量）
   timerLoopId = setInterval(() => {
     const now = Date.now();
     const remain = timerEndAt - now;
@@ -597,14 +587,12 @@ function startTimerForQuestion() {
     const pct = Math.max(0, Math.min(100, (remain / timerTotalMs) * 100));
     if (timerInnerEl) timerInnerEl.style.width = `${pct}%`;
 
-    // warn（残り5秒）
     const isWarn = sec <= WARN_AT_SEC;
     if (timerOuterEl) {
       if (isWarn) timerOuterEl.classList.add("warn");
       else timerOuterEl.classList.remove("warn");
     }
 
-    // ✅ 残り5秒は赤に強制
     if (isWarn && timerInnerEl) {
       timerInnerEl.style.background =
         "linear-gradient(90deg, rgba(255,70,70,0.95), rgba(255,180,80,0.65))";
@@ -616,7 +604,6 @@ function startTimerForQuestion() {
   }, 100);
 }
 
-// TIME UP時のみ：淡いノイズ走査線（軽量）
 function triggerTimeUpScanlineOnce() {
   if (!quizEl) return;
   quizEl.classList.remove("timeup-scan");
@@ -626,7 +613,6 @@ function triggerTimeUpScanlineOnce() {
 }
 
 function onTimeUp() {
-  // ★★★ 修正点：TIME UP を「不正解」として履歴に積む（星計算の母数を壊さない） ★★★
   if (locked) return;
 
   locked = true;
@@ -635,7 +621,6 @@ function onTimeUp() {
   const q = order[index];
   const correctIdx = q.answer - 1;
 
-  // 履歴（TIME UP を「選択なし(-1)の不正解」として積む）
   history.push({
     q,
     selectedIdx: -1,
@@ -644,13 +629,11 @@ function onTimeUp() {
     isTimeUp: true,
   });
 
-  // 正解だけ表示（不正解の赤は付けない）
   try {
     choiceBtns.forEach((btn) => btn.classList.remove("correct", "wrong"));
     if (choiceBtns[correctIdx]) choiceBtns[correctIdx].classList.add("correct");
   } catch (_) {}
 
-  // コンボは途切れる扱い
   combo = 0;
   updateMeterUI();
   updateScoreUI();
@@ -658,7 +641,6 @@ function onTimeUp() {
   triggerTimeUpScanlineOnce();
   updateStatusUI("TIME UP", { glitch: true });
 
-  // 「次へ」解禁
   nextBtn.disabled = false;
   pulseNext();
 }
@@ -684,7 +666,6 @@ function render() {
   nextBtn.disabled = true;
   locked = false;
 
-  // ✅各問の開始タイマー
   startTimerForQuestion();
 }
 
@@ -720,7 +701,6 @@ function judge(selectedIdx) {
   if (locked) return;
   locked = true;
 
-  // ✅回答が入ったらタイマー停止
   stopTimer();
 
   disableChoices(true);
@@ -728,7 +708,6 @@ function judge(selectedIdx) {
   const correctIdx = q.answer - 1;
   const isCorrect = selectedIdx === correctIdx;
 
-  // 履歴
   history.push({ q, selectedIdx, correctIdx, isCorrect });
 
   if (isCorrect) {
@@ -929,7 +908,6 @@ function ensureResultOverlay() {
 function showResultOverlay() {
   ensureResultOverlay();
 
-  // ★★★ 修正点：母数は history.length を優先（TIME UP を含めて堅牢に） ★★★
   const total = (history && history.length) ? history.length : (order.length || 1);
 
   const percent = Math.round((score / total) * 100);
@@ -998,14 +976,13 @@ function finish() {
 // ===== Events =====
 choiceBtns.forEach((btn) => {
   btn.addEventListener("click", async () => {
-    await unlockAudioOnce(); // ユーザー操作なのでOK
+    await unlockAudioOnce();
     const idx = Number(btn.dataset.idx);
     judge(idx);
   });
 });
 
 nextBtn.addEventListener("click", () => {
-  // 次へ押下でタイマーは次のrenderで再開
   index++;
   if (index >= order.length) finish();
   else render();
@@ -1025,22 +1002,18 @@ bgmToggleBtn.addEventListener("click", async () => {
   await setBgm(!bgmOn);
 });
 
-// Start画面：図鑑を開く（保険）
 if (openCollectionBtn) {
   openCollectionBtn.addEventListener("click", () => {
     window.location.href = "https://naoki496.github.io/cards-hub/";
   });
 }
 
-// Mode switch（開始画面）
 function setMode(nextMode) {
   mode = nextMode;
   updateModeUI();
 }
 
-// ✅開始処理
 async function beginFromStartScreen({ auto = false } = {}) {
-  // auto start は「ユーザー操作」ではないので BGM自動ONしない
   if (!auto) {
     await unlockAudioOnce();
     await setBgm(true);
@@ -1048,14 +1021,12 @@ async function beginFromStartScreen({ auto = false } = {}) {
 
   startNewSession();
 
-  // “隠す” ではなく “消す”
   try {
     if (startScreenEl) startScreenEl.remove();
   } catch (_) {
     if (startScreenEl) startScreenEl.style.display = "none";
   }
 
-  // URLから start=1 を消す（自動開始の再発防止）
   try {
     const p = new URLSearchParams(location.search);
     p.delete("start");
@@ -1088,7 +1059,6 @@ if (modeEndlessBtn) {
   });
 }
 
-// 互換用：startBtn が存在する場合
 if (startBtnEl) {
   startBtnEl.addEventListener("click", async () => {
     try {
@@ -1124,16 +1094,15 @@ function showError(err) {
 // ===== Boot =====
 (async function boot() {
   try {
-    // ✅ 旧キー → 新キー（共通キー）への移行（最優先で1回だけ）
-    migrateCardCountsIfNeeded();
-
-    // 初期モード：URL優先
     if (URL_MODE === "endless" || URL_MODE === "normal") setMode(URL_MODE);
     else setMode("normal");
 
     if (!window.CSVUtil || typeof window.CSVUtil.load !== "function") {
       throw new Error("CSVUtil が見つかりません（csv.js の読み込み順/内容を確認）");
     }
+
+    // ✅ 旧キー救済（必要なら1回だけ）
+    migrateCardCountsIfNeeded();
 
     const baseUrl = new URL("./", location.href).toString();
     const csvUrl = new URL("questions.csv", baseUrl).toString();
@@ -1144,11 +1113,9 @@ function showError(err) {
       startBtnEl.textContent = "読み込み中…";
     }
 
-    // questions.csv
     const raw = await window.CSVUtil.load(csvUrl);
     questions = raw.map(normalizeRow);
 
-    // cards.csv（失敗しても落とさない）
     try {
       const cardsUrl = new URL("cards.csv", baseUrl).toString();
       const rawCards = await window.CSVUtil.load(cardsUrl);
@@ -1173,7 +1140,6 @@ function showError(err) {
       cardPoolByRarity = { 3: [], 4: [], 5: [] };
     }
 
-    // UIだけ準備
     progressEl.textContent = `準備完了（問題数 ${questions.length}）`;
     updateScoreUI();
     updateModeUI();
@@ -1188,7 +1154,6 @@ function showError(err) {
     disableChoices(true);
     nextBtn.disabled = true;
 
-    // timer UI だけ先に出しておく
     ensureTimerUI();
     if (timerTextEl) timerTextEl.textContent = `${QUESTION_TIME_SEC.toFixed(0)}.0s`;
     if (timerInnerEl) {
@@ -1206,7 +1171,6 @@ function showError(err) {
 
     ensureResultOverlay();
 
-    // ✅ start=1 が付いていたら「自動開始」するが、BGMは自動ONしない（NotAllowedError回避）
     if (URL_AUTOSTART) {
       try {
         await beginFromStartScreen({ auto: true });
