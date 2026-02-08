@@ -183,7 +183,13 @@ const seCorrectPool = makeSEPool(AUDIO_FILES.correct, 0.9);
 const seWrongPool = makeSEPool(AUDIO_FILES.wrong, 0.9);
 
 // ===== Storage (localStorage 可用性チェック + フォールバック) =====
-const STORAGE_KEY_CARD_COUNTS = "kobunQuiz.v1.cardCounts";
+//
+// ✅ ここが今回の本修正：cards-hub と同じ共通キーへ統一
+//   - 新キー: hklobby.v1.cardCounts
+//   - 旧キー: kobunQuiz.v1.cardCounts（過去データ救済用）
+//
+const STORAGE_KEY_CARD_COUNTS = "hklobby.v1.cardCounts";
+const LEGACY_KEY_CARD_COUNTS  = "kobunQuiz.v1.cardCounts";
 
 function storageAvailable() {
   try {
@@ -214,8 +220,38 @@ const StorageAdapter = (() => {
         console.warn("[StorageAdapter] localStorage write failed; fallback to memory.", e);
       }
     },
+    remove(key) {
+      try {
+        if (ok) window.localStorage.removeItem(key);
+        else mem.delete(key);
+      } catch (e) {
+        mem.delete(key);
+      }
+    },
   };
 })();
+
+function migrateCardCountsIfNeeded() {
+  // ✅ 新キーが無く、旧キーがあるときだけ移行（1回限り）
+  try {
+    const hasNew = !!StorageAdapter.get(STORAGE_KEY_CARD_COUNTS);
+    const legacyRaw = StorageAdapter.get(LEGACY_KEY_CARD_COUNTS);
+
+    if (!hasNew && legacyRaw) {
+      // 旧データが壊れていたら移行しない（落とさない）
+      const parsed = JSON.parse(legacyRaw);
+      if (parsed && typeof parsed === "object") {
+        StorageAdapter.set(STORAGE_KEY_CARD_COUNTS, legacyRaw);
+        // 旧キーは削除（運用を一本化）
+        StorageAdapter.remove(LEGACY_KEY_CARD_COUNTS);
+        console.log("[migrate] cardCounts migrated to", STORAGE_KEY_CARD_COUNTS);
+      }
+    }
+  } catch (e) {
+    // 何もしない（安全第一）
+    console.warn("[migrate] skipped:", e);
+  }
+}
 
 function loadCardCounts() {
   const raw = StorageAdapter.get(STORAGE_KEY_CARD_COUNTS);
@@ -359,7 +395,6 @@ function rollCardByStars(stars) {
 
   return { ...picked, rarity: tier };
 }
-
 
 function recordCard(card) {
   const counts = loadCardCounts();
@@ -1089,6 +1124,9 @@ function showError(err) {
 // ===== Boot =====
 (async function boot() {
   try {
+    // ✅ 旧キー → 新キー（共通キー）への移行（最優先で1回だけ）
+    migrateCardCountsIfNeeded();
+
     // 初期モード：URL優先
     if (URL_MODE === "endless" || URL_MODE === "normal") setMode(URL_MODE);
     else setMode("normal");
