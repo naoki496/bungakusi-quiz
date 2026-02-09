@@ -718,3 +718,39 @@ h1{
 
 /* legacy UI kill switch（念のため） */
 .start-hidden{ display:none !important; }
+
+/* =====================================================
+   COUNTDOWN OVERLAY（開始カウントダウン復帰）
+   ===================================================== */
+#countdownOverlay{
+  position: fixed;
+  inset: 0;
+  display: none; /* app.js が flex に切替 */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10001; /* start-screen(9999) / result(9998) より上 */
+}
+
+#countdownOverlay .countdown-num{
+  font-size: clamp(64px, 12vw, 140px);
+  font-weight: 900;
+  letter-spacing: .06em;
+  color: #fff;
+  text-shadow:
+    0 0 18px rgba(255,178,0,.55),
+    0 0 30px rgba(255,211,106,.35);
+  transform: scale(1);
+  opacity: .98;
+}
+
+#countdownOverlay .countdown-num.pop{
+  animation: cdPop .28s ease-out;
+}
+
+@keyframes cdPop{
+  0%{ transform: scale(.85); filter: blur(.6px); opacity: .7; }
+  100%{ transform: scale(1); filter: blur(0); opacity: 1; }
+}
