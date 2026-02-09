@@ -1167,3 +1167,6 @@ h1{
     0 0 18px rgba(255,178,0,.45),
     0 0 30px rgba(255,211,106,.25);
 }
+
+/* === legacy UI kill switch === */
+.start-hidden{ display:none !important; }
