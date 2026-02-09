@@ -10,6 +10,7 @@ const AUDIO_FILES = {
   bgm: "./assets/bgm.mp3",
   correct: "./assets/correct.mp3",
   wrong: "./assets/wrong.mp3",
+  go: "./assets/go.mp3",
 };
 
 // ▼▼▼ A: cards.csv 受け皿（UI非変更） ▼▼▼
@@ -154,6 +155,10 @@ const seWrong = new Audio(AUDIO_FILES.wrong);
 seWrong.preload = "auto";
 seWrong.volume = 0.9;
 
+const seGo = new Audio(AUDIO_FILES.go);
+seGo.preload = "auto";
+seGo.volume = 0.95;
+
 // ===== SE Pool（同一結果が連続しても鳴らすため）=====
 const SE_POOL_SIZE = 4;
 
@@ -181,6 +186,7 @@ function makeSEPool(src, volume) {
 
 const seCorrectPool = makeSEPool(AUDIO_FILES.correct, 0.9);
 const seWrongPool = makeSEPool(AUDIO_FILES.wrong, 0.9);
+const seGoPool = makeSEPool(AUDIO_FILES.go, 0.95);
 
 // ===== Storage (localStorage 可用性チェック + フォールバック) =====
 // ✅ 共通キー（DOJO/両クイズ/図鑑で共有）
@@ -309,7 +315,7 @@ function escapeHtml(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/\'/g, "&#39;");
 }
 
 function highlightBrackets(str) {
@@ -339,6 +345,43 @@ function pickWeighted(arr, getWeight) {
     if (r <= 0) return arr[i];
   }
   return arr[arr.length - 1];
+}
+
+// ===== Countdown Overlay（開始演出）=====
+let countdownOverlayEl = null;
+
+function ensureCountdownOverlay() {
+  if (countdownOverlayEl) return countdownOverlayEl;
+
+  const el = document.createElement("div");
+  el.id = "countdownOverlay";
+  el.innerHTML = `<div class="countdown-num" id="countdownNum">3</div>`;
+  el.style.display = "none";
+  document.body.appendChild(el);
+  countdownOverlayEl = el;
+  return el;
+}
+
+async function runCountdown() {
+  const overlay = ensureCountdownOverlay();
+  const numEl = overlay.querySelector("#countdownNum");
+
+  overlay.style.display = "flex";
+
+  const seq = ["3", "2", "1", "GO"];
+  for (let i = 0; i < seq.length; i++) {
+    numEl.textContent = seq[i];
+
+    // GO の瞬間に SE
+    if (seq[i] === "GO") seGoPool.play();
+
+    numEl.classList.remove("pop");
+    void numEl.offsetWidth;
+    numEl.classList.add("pop");
+    await new Promise((r) => setTimeout(r, 850));
+  }
+
+  overlay.style.display = "none";
 }
 
 // ===== Card reward helpers =====
@@ -464,6 +507,17 @@ async function unlockAudioOnce() {
     bgmAudio.pause();
     bgmAudio.currentTime = 0;
     bgmAudio.muted = false;
+
+    // GO SE もアンロック（念のため）
+    try {
+      seGo.muted = true;
+      await seGo.play();
+      seGo.pause();
+      seGo.currentTime = 0;
+      seGo.muted = false;
+    } catch (_) {
+      seGo.muted = false;
+    }
   } catch (_) {
     bgmAudio.muted = false;
   }
@@ -1014,18 +1068,25 @@ function setMode(nextMode) {
 }
 
 async function beginFromStartScreen({ auto = false } = {}) {
+  // カウントダウン中は操作不可
+  disableChoices(true);
+  nextBtn.disabled = true;
+
   if (!auto) {
     await unlockAudioOnce();
     await setBgm(true);
   }
 
-  startNewSession();
-
+  // 先に開始画面を消す（overlay が確実に見える）
   try {
     if (startScreenEl) startScreenEl.remove();
   } catch (_) {
     if (startScreenEl) startScreenEl.style.display = "none";
   }
+
+  // 開始カウントダウン → 自動で開始
+  await runCountdown();
+  startNewSession();
 
   try {
     const p = new URLSearchParams(location.search);
