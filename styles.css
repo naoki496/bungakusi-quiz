@@ -1017,3 +1017,83 @@ h1{
   0%{ transform: scale(.85); filter: blur(.6px); opacity: .7; }
   100%{ transform: scale(1); filter: blur(0); opacity: 1; }
 }
+
+/* ============================
+   Amber Theme Override (bungakusi)
+   既存CSSは触らず、末尾で上書き
+============================ */
+
+/* アンバー基調：金～琥珀のグローに寄せる */
+:root{
+  /* 主要アクセント（ボタン枠/グロー/ハイライト） */
+  --accent1: #ffb200;   /* amber */
+  --accent2: #ffd36a;   /* soft gold */
+  --amber:   #ffb200;
+  --gold:    #ffd36a;
+
+  /* もし既存で warning 色を変数化している場合に備えて */
+  --warn:    #ff4a4a;
+
+  /* 文字色系（必要なら） */
+  --text:    #ffffff;
+  --muted:   rgba(255,255,255,.78);
+
+  /* 影・発光（存在すれば上書き） */
+  --glowA: rgba(255, 178, 0, .55);
+  --glowB: rgba(255, 211, 106, .35);
+}
+
+/* START / メニュー系のボタンが青寄りに見えるのをアンバー寄せ */
+.ctrl,
+.choice,
+#bgmToggle{
+  border-color: rgba(255, 178, 0, .35) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 178, 0, .10) inset,
+    0 0 28px rgba(255, 178, 0, .10);
+}
+
+/* hover/focus の光もアンバーに */
+.ctrl:hover,
+.choice:hover,
+.ctrl:focus-visible,
+.choice:focus-visible,
+#bgmToggle:hover,
+#bgmToggle:focus-visible{
+  box-shadow:
+    0 0 0 1px rgba(255, 178, 0, .22) inset,
+    0 0 34px rgba(255, 178, 0, .18),
+    0 0 72px rgba(255, 211, 106, .10);
+}
+
+/* タイトル/強調のグローが紫・青に寄っている場合を矯正 */
+h1,
+.countdown-num,
+.mode-pill{
+  text-shadow:
+    0 0 18px rgba(255, 178, 0, .45),
+    0 0 30px rgba(255, 211, 106, .25);
+}
+
+/* TIMEバー（もし既存が青系グラデなら、アンバーに寄せる） */
+.timer-inner,
+#timerInner{
+  background: linear-gradient(90deg,
+    rgba(255,178,0,.95),
+    rgba(255,211,106,.55)
+  ) !important;
+  box-shadow: 0 0 28px rgba(255,178,0,.18) !important;
+}
+
+/* 残り5秒演出の赤（既存 warn クラスがある前提で軽く補強） */
+.warn .timer-inner,
+.warn #timerInner,
+#timerOuter.warn #timerInner{
+  background: linear-gradient(90deg,
+    rgba(255,70,70,.95),
+    rgba(255,178,0,.65)
+  ) !important;
+  box-shadow:
+    0 0 28px rgba(255,70,70,.28),
+    0 0 60px rgba(255,70,70,.14) !important;
+}
