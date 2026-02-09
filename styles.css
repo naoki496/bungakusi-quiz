@@ -1,12 +1,24 @@
-:root{
-  --bg0:#07090d;
-  --bg1:#0a0f18;
-  --glass: rgba(255,255,255,0.05);
-  --line: rgba(0,255,255,0.28);
-  --glow: rgba(0,255,255,0.24);
-  --cyan: #00ffff;
-  --yellow: #ffd54a;
+:root {
+  /* ===== Background ===== */
+  --bg0: #050405;   /* メイン背景（ほぼ黒） */
+  --bg1: #0c0907;   /* パネル・カード用 */
+
+  /* ===== Accent (Amber) ===== */
+  --accent1: #ffb300; /* メインアンバー */
+  --accent2: #ff8f00; /* 濃いアンバー */
+
+  /* ===== Text ===== */
+  --text: #ffffff;
+  --text-sub: rgba(255,255,255,0.65);
+
+  /* ===== Glow ===== */
+  --glow: rgba(255,179,0,0.45);
+  --glow-strong: rgba(255,179,0,0.75);
+
+  /* ===== Border ===== */
+  --border: rgba(255,179,0,0.35);
 }
+
 
 /* ===== Global image safety (prevents full-size blowups) ===== */
 img{
