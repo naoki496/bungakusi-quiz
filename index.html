@@ -21,42 +21,31 @@
       </header>
 
       <main class="hub-grid" aria-label="メニュー">
-        <!-- ✅リンク化：通常10問 -->
         <a id="modeNormalBtn" class="hub-card primary" href="./index.html?mode=normal&start=1">
           <div class="hub-main">通常10問</div>
           <div class="hub-sub">10 QUESTIONS / QUICK</div>
         </a>
 
-        <!-- ✅リンク化：連続学習 -->
         <a id="modeEndlessBtn" class="hub-card primary" href="./index.html?mode=endless&start=1">
           <div class="hub-main">連続学習</div>
           <div class="hub-sub">ENDLESS / FOCUS</div>
         </a>
 
-        <!-- 図鑑（既存） -->
         <a id="openCollectionBtn" class="hub-card" href="https://naoki496.github.io/cards-hub/">
           <div class="hub-main">図鑑</div>
           <div class="hub-sub">COLLECTION / CARDS</div>
         </a>
 
-        <!-- TOPへ戻る（指定URL） -->
         <a id="backToTopBtn" class="hub-card exit" href="https://naoki496.github.io/kokugo-dojo/">
           <div class="hub-main">TOPへ戻る</div>
           <div class="hub-sub">EXIT / PORTAL</div>
         </a>
       </main>
 
-      <!-- ✅追加：4ボタン直下の注記（レイアウト非破壊） -->
       <div style="margin-top:10px;font-size:12px;line-height:1.4;color:rgba(255,255,255,0.72);text-align:center;">
         開始後はBGMが流れます
       </div>
 
-      <!-- app.js互換のため残す（画面には出さない） -->
-      <button id="startBtn" class="start-hidden" type="button">START</button>
-      <div id="startNote" class="start-hidden"></div>
-
-      
-      
       <!-- app.js互換のため残す（画面には出さない） -->
       <button id="startBtn" class="start-hidden" type="button">START</button>
       <div id="startNote" class="start-hidden"></div>
@@ -108,8 +97,7 @@
         <button id="restartBtn" class="ctrl" type="button">最初から</button>
       </div>
 
-      <div id="hint">
-     </div>
+      <div id="hint"></div>
     </div>
   </div>
 
@@ -117,9 +105,3 @@
   <script src="./app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
