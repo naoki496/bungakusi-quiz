@@ -1097,3 +1097,73 @@ h1,
     0 0 28px rgba(255,70,70,.28),
     0 0 60px rgba(255,70,70,.14) !important;
 }
+
+/* =========================
+   BLACK × AMBER THEME
+========================= */
+
+:root{
+  --bg0: #050505;
+  --bg1: #0a0a0a;
+
+  --accent1: #ffb200;   /* amber */
+  --accent2: #ffd36a;   /* soft gold */
+
+  --line: rgba(255,178,0,.35);
+  --glow: rgba(255,178,0,.45);
+  --glow-soft: rgba(255,211,106,.25);
+
+  --text: #ffffff;
+  --muted: rgba(255,255,255,.78);
+}
+
+/* 背景を完全に黒へ */
+body{
+  background:
+    radial-gradient(1200px 600px at 50% -10%,
+      rgba(255,178,0,.08),
+      transparent 60%),
+    linear-gradient(180deg, var(--bg1), var(--bg0));
+}
+
+/* パネル */
+.panel{
+  border-color: var(--line);
+  box-shadow:
+    0 0 0 1px rgba(255,178,0,.08) inset,
+    0 0 40px rgba(255,178,0,.12);
+}
+
+/* メニューカード / ボタン */
+.ctrl,
+.choice{
+  border-color: var(--line);
+  box-shadow:
+    0 0 0 1px rgba(255,178,0,.12) inset,
+    0 0 30px rgba(255,178,0,.12);
+}
+
+.ctrl:hover,
+.choice:hover{
+  box-shadow:
+    0 0 0 1px rgba(255,178,0,.25) inset,
+    0 0 40px rgba(255,178,0,.22),
+    0 0 80px rgba(255,211,106,.12);
+}
+
+/* TIMEバー */
+#timerInner{
+  background: linear-gradient(
+    90deg,
+    #ffb200,
+    #ffd36a
+  );
+  box-shadow: 0 0 30px rgba(255,178,0,.25);
+}
+
+/* 見出し */
+h1{
+  text-shadow:
+    0 0 18px rgba(255,178,0,.45),
+    0 0 30px rgba(255,211,106,.25);
+}
